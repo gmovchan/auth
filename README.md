@@ -8,17 +8,17 @@
 - [ ] пользователи с разными привилегиями 
 - [x] подготавливаемые запросы для защиты от SQL инъекций
 
-Пример config.ini
-```; первая БД
-[vagrant]
-host = "localhost"
-user = "homestead"
-password = "secret"
-db = "db_name"
+##Пример config.ini
+    ; первая БД
+    [vagrant]
+    host = "localhost"
+    user = "homestead"
+    password = "secret"
+    db = "db_name"
 
-; вторая БД
-[db_two]
-host = "localhost"
-user = "root"
-password = ""
-db = "db_name"```
+    ; вторая БД
+    [db_two]
+    host = "localhost"
+    user = "root"
+    password = ""
+    db = "db_name"
