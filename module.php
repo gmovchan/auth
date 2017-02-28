@@ -175,7 +175,7 @@
             
             if ($this->db->query("SELECT * FROM `users` WHERE `login_user` = ? AND `password_user` = ?;", 'num_row', '', array($login, $password)) == 1) {                
                     //пользователь с таким логинов и паролем найден
-                    $_SESSION['id_user'] = $this->db->query("SELECT * FROM `users` "."WHERE `login_user` = ? AND `password_user` = ?;", 'result', 0, array($login, $password));
+                    $_SESSION['id_user'] = $this->db->query("SELECT * FROM `users` WHERE `login_user` = ? AND `password_user` = ?;", 'result', 0, array($login, $password));
                     $_SESSION['login_user'] = $login;
                     //добавляет/обновляет запись в таблице сессий и ставит куки
                     $r_code = $this->generateCode(15);
@@ -183,8 +183,8 @@
                     if ($this->db->query("SELECT * FROM `session` WHERE `id_user` = ?;", 'num_row', '', array($_SESSION['id_user'])) == 1) {
 
                         //запись уже есть - обновляем
-                        $this->db->query("UPDATE `session` SET `code_sess` = '".$r_code."', `user_agent_sess` = ? where `id_user` = ?;", '', '', 
-                                array($_SERVER['HTTP_USER_AGENT'], $_SESSION['id_user']));          
+                        $this->db->query("UPDATE `session` SET `code_sess` = ?, `user_agent_sess` = ? where `id_user` = ?;", '', '', 
+                                array($r_code, $_SERVER['HTTP_USER_AGENT'], $_SESSION['id_user']));          
                     } else {
 
                         // записи нет, добавляет
