@@ -28,7 +28,7 @@
          * запрос к БД
          * без понятия зачем тут нужен новый уровень абстракции
          * $section_name принимает массив с параметрами для подготавливаемого 
-         * запроса с неименованными параметрами для защиты от инъекций
+         * запроса с неименованными псевдопеременными для защиты от инъекций
          */
         function query($query, $type = null, $num = null, array $query_param = array()) {
             try {
@@ -99,7 +99,7 @@
     class Auth {
         
         /**
-         * хранит объект класса Mysql для работы с БД, чтобы любая функция этого 
+         * $db хранит объект класса Mysql для работы с БД, чтобы любая функция этого 
          * класса могла им воспользоваться
          */
         private $db;
@@ -108,16 +108,132 @@
             $this->db = $db_class;
         }
         
-        function check_new_user() {
-
+        function reg($login, $password, $password2, $mail) {
+            $check = $this->check_new_user($login, $password, $password2, $mail);
+            if ($check == 'good') {
+                $password = md5($password.'lol');
+                if ($this->db->query("INSERT INTO `users` ( `login_user`,"
+                        . " `password_user`, `mail_user`) VALUES (?, ?, ?);",
+                    'num_row', '', array($login, $password, $mail)) != 0) {
+                    return true;
+               } else {
+                   echo '<p>ВОзникла ошибка при регистрации нового пользователя. Свяжитесь с администратором</p>';
+                   return false;
+               }
+            } else {
+                var_dump($check);
+                echo $this->error_print($check);
+                return false;
+            }
         }
         
-        function reg() {
+        /*
+         * TODO: вынести валидацию формы на фронт с помощью AJAX
+         */
+        function check_new_user($login, $password, $password2, $mail) {
+            if (empty($login) or empty($password) or empty($mail)) {
+                $error[]='Все поля обязательны для заполнения';
+            }
+            if ($password != $password2) {
+                $error[]='Введенные пароли не совпадают';
+            }
+            if (strlen($login) < 3 or strlen($login) > 30) {
+                $error[]='Длина логина должна быть от 3 до 30 символов';
+            }
+            /*
+             * Валидация почты не используя регулярки 
+             * http://www.php.net/manual/en/filter.examples.validation.php
+             */ 
+            if (!filter_var($mail, FILTER_VALIDATE_EMAIL)) {
+                $error[]='Некорректный email';
+            }
             
+            if ($this->db->query("SELECT * FROM `users` WHERE `login_user` = ?;",
+                    'num_row', '', array($login)) != 0) {
+                $error[]='Пользователь с таким именем уже существует';
+            }
+            
+            if ($this->db->query("SELECT * FROM `users` WHERE `mail_user` = ?;",
+                    'num_row', '', array($mail)) != 0) {
+                $error[]='Пользователь с таким email уже существует';
+            }
+            
+            if (isset($error)) {
+                return $error;
+            } else {
+                return 'good';
+            }
         }
         
         /**
-         * проверка авторизации
+         * ajax валидация формы регистрации
+         * @param type $json содержание ajax запроса в формате JSON
+         */
+        function check_entry_field_ajax($json) {
+            $form = json_decode($json, true);
+            $field_name = $form['name'];
+            $field_value = $form['value'];
+            $response = array('error' => '');
+            
+            if (empty($field_value)) {
+                $error = 'Поле обязательно должно быть заполнено';
+            } else {
+                switch ($field_name) {
+                    case 'login':
+
+                        if ($this->db->query("SELECT * FROM `users` WHERE `login_user` = ?;",
+                                'num_row', '', array($field_value)) != 0) {
+                            $error = 'Пользователь с таким именем уже существует';
+                            break;
+                        }
+
+                        break;
+
+                    case 'mail':
+
+                        if (!filter_var($mail, FILTER_VALIDATE_EMAIL)) {
+                            $error = 'Некорректный email';
+                            break;
+                        }
+
+                        if ($this->db->query("SELECT * FROM `users` WHERE `mail_user` = ?;",
+                                'num_row', '', array($field_value)) != 0) {
+                            $error = 'Пользователь с таким email уже существует';
+                            break;
+                        }
+
+                        break;
+
+                    default:
+                        $error = false;
+                        break;
+               }
+            }
+            
+            if ($error) {
+                $response('error') = $error;
+            } else {
+                $response('error') = false;
+            }
+            
+            return json_encode($response, JSON_UNESCAPED_UNICODE);
+        }
+        
+        /**
+         * Проверяет строку и возвращает текст ошибки, если она пустая
+         * @param type $value
+         * @return boolean|string
+         */
+        function check_empty($value) {
+            if (empty($value)) {
+                return 'Поле обязательно должно быть заполнено';
+            }
+            return false;
+        }
+
+
+        /**
+         * Авторизация
          */
         function authorization() {
             if (isset($_SESSION['id_user']) and isset($_SESSION['login_user'])) {
@@ -141,8 +257,7 @@
                             $_SESSION['id_user'] = $id_user;
                             $_SESSION['login_user'] = $this->db->query("SELECT login_user FROM `users` WHERE `id_user` = ?;", 'result', 0, array($id_user));
                             
-                            //обновляет куки
-                            
+                            //обновляет куки                            
                             setcookie("id_user", $_SESSION['id_user'], time()+3600*24*14);
                             setcookie("code_user", $code_user, time()+3600*24*14);
 
@@ -163,14 +278,10 @@
         }
         
         /**
-         * Авторизация
+         * Аутентификация
          */
         function authentication() {
             $login = $_POST['login'];
-            //хэщ пароля с солью
-            //было: $password = md5($this->db->screening($_POST['password']).'lol');
-            //убрал петод screening, потому что поле все равно шифруется
-            //TODO: надо переделать обычные запросы к БД на подготавливаемые запросы для защиты от инъекций
             $password = md5($_POST['password'].'lol');
             
             if ($this->db->query("SELECT * FROM `users` WHERE `login_user` = ? AND `password_user` = ?;", 'num_row', '', array($login, $password)) == 1) {                
@@ -213,8 +324,11 @@
             setcookie("id_user", '', time()-3600);
             setcookie("code_user", '', time()-3600);
             header("Location: index.php");
-            //XXX: по какой-то причине, если не делать выход, то скрипт будет дальше
-            // выполняться, пока не дойдет до конца и только тогда сменет хейдер
+            /*
+             * XXX: по какой-то причине, если не делать выход, то скрипт будет дальше
+             * выполняться, пока не дойдет до конца и только тогда сменит хейдер
+             * из-за чего куки будут переписаны функцией аутентификации
+             */
             exit();
         }
         
@@ -249,10 +363,10 @@
 
     }
     
-    /* авторизация на страницах
-     * if (!$auth->check()) {
-        //~ совершаем процедуру выхода
-        $auth->exit_user();
+    /* аутентификация на страницах
+        if (!$auth->check()) {
+            //~ совершаем процедуру выхода
+            $auth->exit_user();
         }
      */
 
