@@ -39,8 +39,8 @@
         
         $form .= '
                         <div class="form-group">
-                          <label for="name">Никнейм</label>
-                          <input type="text" class="form-control" name="login" placeholder="Никнейм" value="'.@$_POST['login'].'">
+                          <label for="name">Логин</label>
+                          <input type="text" class="form-control" name="login" placeholder="Логин" value="'.@$_POST['login'].'">
                         </div>
                         <div class="form-group">
                           <label for="password">Пароль</label>
