@@ -22,61 +22,48 @@
   <body>
         <div class="container">
 <?php
-    $r = '';
     require 'module.php';
     $db = new Mysql();
     $db->connect('config.ini', 'vagrant');
-    $auth = new Auth($db);
-    
-    //Авторизация
-    if (isset($_POST['send'])) {
-        if (!$auth->authentication()) {
-            $error = $_SESSION['error'];
-            unset ($_SESSION['error']);
-        }
-    }
-    
-    //выход
-    if (isset($_GET['exit'])) {
-            $auth->exit_user();
-            
-    }
-    
-    if ($auth->authorization()) {
-        $r .= 'Добро пожаловать ' . $_SESSION['login_user'] . 
-                '<br/><a href="?exit">Выйти</a>';
-    } else {
-                
-        $r.='  
-    <form action="" method="post" class="form-signin">
-        <h2 class="form-signin-heading">Пожалуйста войдите</h2>
-        ';
-                
-        if (isset($error)) {
-            $r .= '<div class="bg-danger">Аутентификация не прошла</div>';
-            $r .= $error;
-            
+    $reg = new auth($db);  //~ Создаем новый объект класса
+
+    function print_form($error = false) {
+        $form = '
+                    <form action="" method="post" class="form-signin">   
+                        <h2 class="form-signin-heading">Восстановление пароля</h2>
+                        ';
+        
+        if ($error) {
+            $form .= $error;
         }
         
-        $r .= '
-        <div class="form-group">
-          <label for="name">Никнейм</label>
-          <input type="text" class="form-control" name="login" placeholder="Никнейм" value="'.@$_POST['login'].'">
-        </div>
-        <div class="form-group">
-          <label for="password">Пароль</label>
-          <input type="password" class="form-control" placeholder="Пароль" name="password">
-        </div>
-        <input class="hidden" name="send" value="send">
-        <button type="submit" class="btn btn-default">Войти</button>, <a href="join.php">зарегистрироваться</a>
-      </form>
-	';
+        $form .= '
+                        <div class="form-group">
+                          <label for="name">Никнейм</label>
+                          <input type="text" class="form-control" name="login" placeholder="Никнейм" value="'.@$_POST['login'].'">
+                        </div>
+                        <div class="form-group">
+                            <label for="mail">Email</label>
+                            <input type="email" class="form-control" name="mail" placeholder="Email" value="'.@$_POST['mail'].'">
+                        </div>
+                        <input class="hidden" name="send" value="send">
+                        <button type="submit" class="btn btn-default">Восстановить</button> или <a href="index.php">войти</a><br />
+                    </form>    
+                    ';
+        return $form;
     }
     
-
-    
-    echo $r;
-?>      
+    if (isset($_POST['send'])) {
+        $reply = $reg->recovery_pass($_POST['login'], $_POST['mail']);
+        if ($reply == 'good') {
+            'Новый пароль был выслан вам на почту';
+        } else {
+            echo print_form($reply);
+        }          
+    } else {
+        echo print_form();;
+    }
+?>                
         </div>
       <!-- jQuery (necessary for Bootstrap's JavaScript plugins) -->
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.12.4/jquery.min.js"></script>

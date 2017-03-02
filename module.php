@@ -117,12 +117,11 @@
                     'num_row', '', array($login, $password, $mail)) != 0) {
                     return true;
                } else {
-                   echo '<p>ВОзникла ошибка при регистрации нового пользователя. Свяжитесь с администратором</p>';
+                   echo '<p>Возникла ошибка при регистрации нового пользователя. Свяжитесь с администратором</p>';
                    return false;
                }
             } else {
-                var_dump($check);
-                echo $this->error_print($check);
+                $_SESSION['error'] = $this->error_print($check);
                 return false;
             }
         }
@@ -169,6 +168,7 @@
          * ajax валидация формы регистрации
          * @param type $json содержание ajax запроса в формате JSON
          */
+        /*
         function check_entry_field_ajax($json) {
             $form = json_decode($json, true);
             $field_name = $form['name'];
@@ -218,7 +218,7 @@
             
             return json_encode($response, JSON_UNESCAPED_UNICODE);
         }
-        
+        */
         /**
          * Проверяет строку и возвращает текст ошибки, если она пустая
          * @param type $value
@@ -332,8 +332,46 @@
             exit();
         }
         
-        function recovery_pass($param) {
-            
+        function recovery_pass($login, $mail) {        
+            if ($this->db->query("SELECT * FROM `users` WHERE `login_user`=?;", 
+                    'num_row', '', array($login)) != 1) {
+                //не найден такой пользователь
+                $error[] = 'Пользователь с таким именем не найден';
+                return $this->error_print($error);
+            } else {
+                $db_inf = $this->db->query("SELECT * FROM `users` WHERE `login_user`=?;", 
+                    'accos', '', array($login));
+                if (!filter_var($mail, FILTER_VALIDATE_EMAIL)) {
+                    $error[] = 'Введен некорректный email';
+                }
+                if ($mail != $db_inf['mail_user']) {
+                    $error[] = 'Введенный email не соответствует введенному при регистрации';
+                }
+                if (!isset($error)) {
+                    //если нет ошибок, то восстанавливает пароль
+                    $new_password = $this->generateCode(8);
+                    $new_password_sql = md5($new_password.'lol');
+                    $message = "Вы запросили восстановление пароля на сайте "
+                            . "%sitename% для учетной записи ".$db_inf['login_user'].
+                            " \nВаш новый пароль: ".$new_password."\n\n С уважением "
+                            . "администрация сайта %sitename%.";
+                    
+                    if($send_mail = mail($mail, "Восстановление пароля", $message, "From: webmaster@satename.ru\r\n".
+                            "Reply-To: webmaster@satename.ru\r\n"."X-Mailer: PHP/". phpversion())) {
+                        //обновляет пароль к базе
+                        $this->db->query("UPDATE `users` SET `password_user` = ? WHERE `id_user` = ?;",
+                                '', '', array($new_password_sql, $db_inf['id_user']));
+                        return 'good';
+                    } else {
+                        //ошибка при отправки письма
+                        var_dump($message);
+                        $error[]='В данный момент восстановление пароля невозможно, свяжитесь с администрацией сайта';
+                        return $this->error_print($error);
+                    } 
+                } else {
+                        return $this->error_print($error);
+                    }
+            }
         }
         
         /**
@@ -354,20 +392,13 @@
          * Формирует список ошибок
          */
         function error_print($error) {
-            $r='<h2>Произошли ошибки:</h2>'."\n".'<ul>';
+            $r='<div class="bg-danger">Произошли ошибки:'."\n".'<ul>';
             foreach ($error as $key=>$value) {
                 $r .= '<li>'.$value.'</li>';
             }
-            return $r.'</ul>';
+            return $r.'</ul></div>';
         }
 
     }
-    
-    /* аутентификация на страницах
-        if (!$auth->check()) {
-            //~ совершаем процедуру выхода
-            $auth->exit_user();
-        }
-     */
 
 ?>
