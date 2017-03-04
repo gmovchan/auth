@@ -1,101 +1,4 @@
 <?php
-    /**
-     * принимает ссылку на файл конфигурации для подключения к БД
-     */
-    class Mysql {
-        
-        //хранит подключение к БД для доступа к нему из методов класса
-        private $dbh;
-        
-        function connect($config_path, $section_name) {
-            //получение данных из файла конфигурации
-            $config_data = $this->config_load($config_path, $section_name);
-            
-            //отлов ошибок подключения к БД
-            try {
-                
-                $this->dbh = new PDO('mysql:host='.$config_data['host'].';dbname='.
-                        $config_data['db'], $config_data['user'], $config_data['password']);
-                // требуется чтобы PDO сообщало об ошибке и прерывало выполнение скрипта
-                $this->dbh->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION); 
-            } catch (PDOException $e) {
-                echo '<p>'.$e->getMessage().'</p>';
-                exit();
-            }
-        }
-        
-        /**
-         * запрос к БД
-         * без понятия зачем тут нужен новый уровень абстракции
-         * $section_name принимает массив с параметрами для подготавливаемого 
-         * запроса с неименованными псевдопеременными для защиты от инъекций
-         */
-        function query($query, $type = null, $num = null, array $query_param = array()) {
-            try {
-                if ($q = $this->dbh->prepare($query)) {
-                    switch ($type) {
-                        case 'num_row': 
-                            $q->execute($query_param);
-                            return $q->rowCount();
-                            break;
-                        
-                        case 'result': 
-                            $q->execute($query_param);
-                            return $q->fetchColumn($num);
-                            break;
-                        
-                        case 'accos': 
-                            $q->execute($query_param);
-                            return $q->fetch(PDO::FETCH_ASSOC);
-                            break;
-                        
-                        case 'none': 
-                            $q->execute($query_param);
-                            return $q;
-                            break;
-
-                        default: 
-                            $q->execute($query_param);
-                            return $q;
-                    }
-                }
-            } catch (PDOException $e) {
-                //TODO: убрать при переносе на сервер, строка только для отладки
-                echo '<p>'.$query.'</p>';
-                echo '<p>'.$e->getMessage().'</p>';
-                exit();
-            }
-            
-            
-        }
-        
-        /**
-         * экранирует данные
-         * FIXME: лучше переделать на подготавливаемые запросы, функция возвращает
-         * строку в кавычках, которая ломает некоторые функции
-         */        
-        function screening($data) {
-            $data = trim($data);
-            return $this->dbh->quote($data);
-        }
-
-
-        /**
-         * получает путь к файлу конфигурации и возвращает массив
-         * если передан $section_name, то возвращает только массив с данными из
-         * определенной секции конфига
-         */
-        function config_load($config_path, $section_name = false) {
-            if (file_exists($config_path)) {
-                $config_array = parse_ini_file($config_path, true);
-                if ($section_name) {
-                    return $config_array[$section_name];
-                }
-                return $config_array;
-            }       
-        }
-    }
-    
     class Auth {
         
         /**
@@ -166,59 +69,78 @@
         
         /**
          * ajax валидация формы регистрации
-         * @param type $json содержание ajax запроса в формате JSON
+         * @param type $data текст в поле input
+         * @param type $type название поля input
+         * @return ответ в формате json с названием поля и текстом ошибки, если она есть
          */
-        /*
-        function check_entry_field_ajax($json) {
-            $form = json_decode($json, true);
-            $field_name = $form['name'];
-            $field_value = $form['value'];
-            $response = array('error' => '');
-            
-            if (empty($field_value)) {
-                $error = 'Поле обязательно должно быть заполнено';
-            } else {
-                switch ($field_name) {
-                    case 'login':
+        function check_input($data, $type) {
+            $message = 'false';
+            $error = false;
+            // убирает пробелы, чтобы не получилось, что имя или пароль будут состоять из одного пробела
+            $data=trim($data);
 
-                        if ($this->db->query("SELECT * FROM `users` WHERE `login_user` = ?;",
-                                'num_row', '', array($field_value)) != 0) {
-                            $error = 'Пользователь с таким именем уже существует';
-                            break;
-                        }
-
-                        break;
-
-                    case 'mail':
-
-                        if (!filter_var($mail, FILTER_VALIDATE_EMAIL)) {
-                            $error = 'Некорректный email';
-                            break;
-                        }
-
-                        if ($this->db->query("SELECT * FROM `users` WHERE `mail_user` = ?;",
-                                'num_row', '', array($field_value)) != 0) {
-                            $error = 'Пользователь с таким email уже существует';
-                            break;
-                        }
-
-                        break;
-
-                    default:
+            switch ($type) {
+                case 'join-name':
+                    if (empty($data)) {
+                        $error = true;
+                        $message = 'Логин не может быть пустым';
+                    } else if ($this->db->query("SELECT * FROM `users` WHERE `login_user` = ?;",
+                            'num_row', '', array($data)) != 0) {
+                        $error = true;
+                        $message = 'Логин занят';
+                    } else {
                         $error = false;
-                        break;
-               }
+                        $message = 'Логин прошел проверку';
+                    }
+                    break;
+
+                case 'join-password':
+                    if (empty($data)) {
+                        $error = true;
+                        $message = 'Пароль не введен';
+                    } else {
+                        $error = false;
+                    }
+
+                    break;
+
+                case 'join-password2':
+                    if ($data == 'empty') {
+                        $error = true;
+                        $message = 'Введите пароль еще раз';
+                    } else if ($data == 'match') {
+                        $error = false;
+                    } else if ($data == 'false') {                
+                        $error = true;
+                        $message = 'Пароли не совпадают';
+                    }
+                    break;
+
+                case 'join-mail':
+                    if (!filter_var($data, FILTER_VALIDATE_EMAIL)) {
+                        $error = true;
+                        $message = 'Некорректный email';
+                    } else if ($this->db->query("SELECT * FROM `users` WHERE `mail_user` = ?;",
+                            'num_row', '', array($data)) != 0) {
+                        $error = true;
+                        $message = 'Пользователь с таким email уже существует';
+                    } else {
+                        $error = false;
+                    }
+                    break;
+                default:
+                  # code...
+                  break;
             }
-            
+
             if ($error) {
-                $response('error') = $error;
+              return json_encode(array('error' => "true", 'message' => $message));
             } else {
-                $response('error') = false;
+              return json_encode(array('error' => "false", 'message' => $message));
             }
-            
-            return json_encode($response, JSON_UNESCAPED_UNICODE);
         }
-        */
+
+
         /**
          * Проверяет строку и возвращает текст ошибки, если она пустая
          * @param type $value

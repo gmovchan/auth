@@ -23,7 +23,8 @@
         <div class="container">
 <?php
     $r = '';
-    require 'module.php';
+    require 'php/module.php';
+    require 'php/mysql.php';
     $db = new Mysql();
     $db->connect('config.ini', 'vagrant');
     $auth = new Auth($db);
