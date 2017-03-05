@@ -22,12 +22,13 @@
   <body>
         <div class="container">
 <?php
+    /*
+     * подключает скрипт, где стартует подключение к БД и создается объект 
+     * класса Auth
+     */
+    require 'php/connection_auth.php';
+
     $r = '';
-    require 'php/module.php';
-    require 'php/mysql.php';
-    $db = new Mysql();
-    $db->connect('config.ini', 'vagrant');
-    $auth = new Auth($db);
     
     //Авторизация
     if (isset($_POST['send'])) {

@@ -1,11 +1,5 @@
 <?php
-    require 'mysql.php';
-    require 'module.php';
-
-    $db = new Mysql();
-    $db->connect('../config.ini', 'vagrant');
-    
-    $auth = new Auth($db);
+    require $_SERVER['DOCUMENT_ROOT'].'/php/connection_auth.php';
     
     $data = $_GET["data"];
     $type = $_GET["type"];

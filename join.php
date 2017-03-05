@@ -22,11 +22,11 @@
   <body>
         <div class="container">
 <?php
-    require 'php/mysql.php';
-    require 'php/module.php';
-    $db = new Mysql();
-    $db->connect('config.ini', 'vagrant');
-    $reg = new auth($db);  //~ Создаем новый объект класса
+    /*
+     * подключает скрипт, где стартует подключение к БД и создается объект 
+     * класса Auth
+     */
+    require 'php/connection_auth.php';
 
     function print_form($error = false) {
         $form = '
@@ -67,7 +67,7 @@
     }
     
     if (isset($_POST['send'])) {
-            if ($reg->reg($_POST['login'], $_POST['password'], $_POST['password2'], $_POST['mail'])) {
+            if ($auth->reg($_POST['login'], $_POST['password'], $_POST['password2'], $_POST['mail'])) {
 
                 print '
                         <h2>Регистрация успешна.</h2>

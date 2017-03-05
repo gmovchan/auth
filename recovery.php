@@ -22,11 +22,11 @@
   <body>
         <div class="container">
 <?php
-    require 'php/mysql.php';
-    require 'php/module.php';
-    $db = new Mysql();
-    $db->connect('config.ini', 'vagrant');
-    $reg = new auth($db);  //~ Создаем новый объект класса
+    /*
+     * подключает скрипт, где стартует подключение к БД и создается объект 
+     * класса Auth
+     */
+    require 'php/connection_auth.php';
 
     function print_form($error = false) {
         $form = '
@@ -55,7 +55,7 @@
     }
     
     if (isset($_POST['send'])) {
-        $reply = $reg->recovery_pass($_POST['login'], $_POST['mail']);
+        $reply = $auth->recovery_pass($_POST['login'], $_POST['mail']);
         if ($reply == 'good') {
             'Новый пароль был выслан вам на почту';
         } else {
