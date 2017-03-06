@@ -1,12 +1,14 @@
 <?php
 
-class Auth {
+class Auth
+{
 
     /**
      * $db хранит объект класса Mysql для работы с БД, чтобы любая функция этого 
      * класса могла им воспользоваться
      */
     private $db;
+    public $errors = [];
 
     function __construct(Mysql $db_class)
     {
@@ -22,11 +24,14 @@ class Auth {
                             . " `password_user`, `mail_user`) VALUES (?, ?, ?);", 'num_row', '', array($login, $password, $mail)) != 0) {
                 return true;
             } else {
-                echo '<p>Возникла ошибка при регистрации нового пользователя. Свяжитесь с администратором</p>';
+                //echo '<p>Возникла ошибка при регистрации нового пользователя. Свяжитесь с администратором</p>';
+                $this->errors[] = '<p>Возникла ошибка при регистрации нового пользователя. Свяжитесь с администратором</p>';
                 return false;
             }
         } else {
-            $_SESSION['error'] = $this->error_print($check);
+            //в случае ошибки при проверки полей формы $check возвращает массив с текстом ошибок
+            $this->errors = $check;
+            //$_SESSION['error'] = $this->error_print($check);
             return false;
         }
     }
@@ -236,22 +241,18 @@ class Auth {
             } else {
                 $error[] = 'Пользователя не сущестует';
             }
-            $_SESSION['error'] = $this->error_print($error);
+            $this->errors = $error;
             return false;
         }
     }
 
     function exit_user()
     {
+        session_start();
         session_destroy();
         setcookie("id_user", '', time() - 3600);
         setcookie("code_user", '', time() - 3600);
-        header("Location: index.php");
-        /*
-         * XXX: по какой-то причине, если не делать выход, то скрипт будет дальше
-         * выполняться, пока не дойдет до конца и только тогда сменит хейдер
-         * из-за чего куки будут переписаны функцией аутентификации
-         */
+        header("Location: auth.php");
         exit();
     }
 
@@ -260,7 +261,8 @@ class Auth {
         if ($this->db->query("SELECT * FROM `users` WHERE `login_user`=?;", 'num_row', '', array($login)) != 1) {
             //не найден такой пользователь
             $error[] = 'Пользователь с таким именем не найден';
-            return $this->error_print($error);
+            $this->errors = $error;
+            return false;
         } else {
             $db_inf = $this->db->query("SELECT * FROM `users` WHERE `login_user`=?;", 'accos', '', array($login));
             if (!filter_var($mail, FILTER_VALIDATE_EMAIL)) {
@@ -287,10 +289,12 @@ class Auth {
                     //ошибка при отправки письма
                     var_dump($message);
                     $error[] = 'В данный момент восстановление пароля невозможно, свяжитесь с администрацией сайта';
-                    return $this->error_print($error);
+                    $this->errors = $error;
+                    return false;
                 }
             } else {
-                return $this->error_print($error);
+                $this->errors = $error;
+                return false;
             }
         }
     }
@@ -313,13 +317,21 @@ class Auth {
     /**
      * Формирует список ошибок
      */
-    function error_print($error)
+    /*
+      function error_print($error)
+      {
+      $r = '<div class="bg-danger">Произошли ошибки:' . "\n" . '<ul>';
+      foreach ($error as $key => $value) {
+      $r .= '<li>' . $value . '</li>';
+      }
+      return $r . '</ul></div>';
+      }
+     * 
+     */
+
+    public function getErrors()
     {
-        $r = '<div class="bg-danger">Произошли ошибки:' . "\n" . '<ul>';
-        foreach ($error as $key => $value) {
-            $r .= '<li>' . $value . '</li>';
-        }
-        return $r . '</ul></div>';
+        return $this->errors;
     }
 
 }
