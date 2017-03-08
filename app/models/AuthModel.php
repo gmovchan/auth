@@ -1,5 +1,7 @@
 <?php
-
+/**
+ * В родительском классе Model находится реализация работы с БД
+ */
 class AuthModel extends Model
 {
 

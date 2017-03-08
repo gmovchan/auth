@@ -2,14 +2,15 @@
 
 class Model
 {
+
     //хранит подключение к БД для доступа к нему из методов класса
     protected $dbh;
-        
+
     function __construct($config_path, $section_name)
     {
         $this->connect($config_path, $section_name);
     }
-    
+
     protected function connect($config_path, $section_name)
     {
         //получение данных из файла конфигурации
