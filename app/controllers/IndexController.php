@@ -8,7 +8,5 @@ class IndexController extends Controller
         $this->checkAuth();
         $this->view->generate('/index.php', 'authTemplate.php');
     }
-    
-    
 
 }
