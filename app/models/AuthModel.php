@@ -1,26 +1,16 @@
 <?php
 
-class Auth
+class AuthModel extends Model
 {
 
-    /**
-     * $db хранит объект класса Mysql для работы с БД, чтобы любая функция этого 
-     * класса могла им воспользоваться
-     */
-    private $db;
     public $errors = [];
-
-    function __construct(Mysql $db_class)
-    {
-        $this->db = $db_class;
-    }
 
     function reg($login, $password, $password2, $mail)
     {
         $check = $this->check_new_user($login, $password, $password2, $mail);
         if ($check == 'good') {
             $password = md5($password . 'lol');
-            if ($this->db->query("INSERT INTO `users` ( `login_user`,"
+            if ($this->query("INSERT INTO `users` ( `login_user`,"
                             . " `password_user`, `mail_user`) VALUES (?, ?, ?);", 'num_row', '', array($login, $password, $mail)) != 0) {
                 return true;
             } else {
@@ -59,11 +49,11 @@ class Auth
             $error[] = 'Некорректный email';
         }
 
-        if ($this->db->query("SELECT * FROM `users` WHERE `login_user` = ?;", 'num_row', '', array($login)) != 0) {
+        if ($this->query("SELECT * FROM `users` WHERE `login_user` = ?;", 'num_row', '', array($login)) != 0) {
             $error[] = 'Пользователь с таким именем уже существует';
         }
 
-        if ($this->db->query("SELECT * FROM `users` WHERE `mail_user` = ?;", 'num_row', '', array($mail)) != 0) {
+        if ($this->query("SELECT * FROM `users` WHERE `mail_user` = ?;", 'num_row', '', array($mail)) != 0) {
             $error[] = 'Пользователь с таким email уже существует';
         }
 
@@ -92,7 +82,7 @@ class Auth
                 if (empty($data)) {
                     $error = true;
                     $message = 'Логин не может быть пустым';
-                } else if ($this->db->query("SELECT * FROM `users` WHERE `login_user` = ?;", 'num_row', '', array($data)) != 0) {
+                } else if ($this->query("SELECT * FROM `users` WHERE `login_user` = ?;", 'num_row', '', array($data)) != 0) {
                     $error = true;
                     $message = 'Логин занят';
                 } else {
@@ -127,7 +117,7 @@ class Auth
                 if (!filter_var($data, FILTER_VALIDATE_EMAIL)) {
                     $error = true;
                     $message = 'Некорректный email';
-                } else if ($this->db->query("SELECT * FROM `users` WHERE `mail_user` = ?;", 'num_row', '', array($data)) != 0) {
+                } else if ($this->query("SELECT * FROM `users` WHERE `mail_user` = ?;", 'num_row', '', array($data)) != 0) {
                     $error = true;
                     $message = 'Пользователь с таким email уже существует';
                 } else {
@@ -174,20 +164,20 @@ class Auth
                 $id_user = $_COOKIE['id_user'];
                 $code_user = $_COOKIE['code_user'];
 
-                if ($this->db->query("SELECT * FROM `session` WHERE `id_user` = ?;", 'num_row', '', array($id_user)) == 1) {
+                if ($this->query("SELECT * FROM `session` WHERE `id_user` = ?;", 'num_row', '', array($id_user)) == 1) {
 
                     //есть запись, сверяет данные
-                    $data = $this->db->query("SELECT * FROM `session` WHERE `id_user` = ?;", 'accos', '', array($id_user));
+                    $data = $this->query("SELECT * FROM `session` WHERE `id_user` = ?;", 'accos', '', array($id_user));
 
                     if ($data['code_sess'] == $code_user and $data['user_agent_sess'] == $_SERVER['HTTP_USER_AGENT']) {
 
                         //данные верны, стартуем сессию
                         $_SESSION['id_user'] = $id_user;
-                        $_SESSION['login_user'] = $this->db->query("SELECT login_user FROM `users` WHERE `id_user` = ?;", 'result', 0, array($id_user));
+                        $_SESSION['login_user'] = $this->query("SELECT login_user FROM `users` WHERE `id_user` = ?;", 'result', 0, array($id_user));
 
                         //обновляет куки                            
-                        setcookie("id_user", $_SESSION['id_user'], time() + 3600 * 24 * 14);
-                        setcookie("code_user", $code_user, time() + 3600 * 24 * 14);
+                        setcookie("id_user", $_SESSION['id_user'], time() + 3600 * 24 * 14, '/');
+                        setcookie("code_user", $code_user, time() + 3600 * 24 * 14, '/');
 
                         return true;
                     } else {
@@ -213,30 +203,30 @@ class Auth
         $login = $_POST['login'];
         $password = md5($_POST['password'] . 'lol');
 
-        if ($this->db->query("SELECT * FROM `users` WHERE `login_user` = ? AND `password_user` = ?;", 'num_row', '', array($login, $password)) == 1) {
+        if ($this->query("SELECT * FROM `users` WHERE `login_user` = ? AND `password_user` = ?;", 'num_row', '', array($login, $password)) == 1) {
             //пользователь с таким логинов и паролем найден
-            $_SESSION['id_user'] = $this->db->query("SELECT * FROM `users` WHERE `login_user` = ? AND `password_user` = ?;", 'result', 0, array($login, $password));
+            $_SESSION['id_user'] = $this->query("SELECT * FROM `users` WHERE `login_user` = ? AND `password_user` = ?;", 'result', 0, array($login, $password));
             $_SESSION['login_user'] = $login;
             //добавляет/обновляет запись в таблице сессий и ставит куки
             $r_code = $this->generateCode(15);
 
-            if ($this->db->query("SELECT * FROM `session` WHERE `id_user` = ?;", 'num_row', '', array($_SESSION['id_user'])) == 1) {
+            if ($this->query("SELECT * FROM `session` WHERE `id_user` = ?;", 'num_row', '', array($_SESSION['id_user'])) == 1) {
 
                 //запись уже есть - обновляем
-                $this->db->query("UPDATE `session` SET `code_sess` = ?, `user_agent_sess` = ? where `id_user` = ?;", '', '', array($r_code, $_SERVER['HTTP_USER_AGENT'], $_SESSION['id_user']));
+                $this->query("UPDATE `session` SET `code_sess` = ?, `user_agent_sess` = ? where `id_user` = ?;", '', '', array($r_code, $_SERVER['HTTP_USER_AGENT'], $_SESSION['id_user']));
             } else {
 
                 // записи нет, добавляет
-                $this->db->query("INSERT INTO `session` (`id_user`, `code_sess`, `user_agent_sess`) VALUE (?, ?, ?);", '', '', array($_SESSION['id_user'], $r_code, $_SERVER['HTTP_USER_AGENT']));
+                $this->query("INSERT INTO `session` (`id_user`, `code_sess`, `user_agent_sess`) VALUE (?, ?, ?);", '', '', array($_SESSION['id_user'], $r_code, $_SERVER['HTTP_USER_AGENT']));
             }
             //ставим куки на 2 недели
-            setcookie("id_user", $_SESSION['id_user'], time() + 3600 * 24 * 14);
-            setcookie("code_user", $r_code, time() + 3600 * 24 * 14);
+            setcookie("id_user", $_SESSION['id_user'], time() + 3600 * 24 * 14, '/');
+            setcookie("code_user", $r_code, time() + 3600 * 24 * 14, '/');
             return true;
         } else {
 
             //пользователь не найден в БД или пароль неверный
-            if ($this->db->query("SELECT * FROM `users` WHERE `login_user` = ?;", 'num_row', 0, array($login)) == 1) {
+            if ($this->query("SELECT * FROM `users` WHERE `login_user` = ?;", 'num_row', 0, array($login)) == 1) {
                 $error[] = 'Неверный пароль';
             } else {
                 $error[] = 'Пользователя не сущестует';
@@ -250,21 +240,23 @@ class Auth
     {
         session_start();
         session_destroy();
-        setcookie("id_user", '', time() - 3600);
-        setcookie("code_user", '', time() - 3600);
-        header("Location: auth.php");
+        setcookie("id_user", '', time() - 3600, '/');
+        setcookie("code_user", '', time() - 3600, '/');
+        var_dump($_COOKIE);
+        $host = 'http://' . $_SERVER['HTTP_HOST'] . '/auth';
+        header("Location:" . $host);
         exit();
     }
 
     function recovery_pass($login, $mail)
     {
-        if ($this->db->query("SELECT * FROM `users` WHERE `login_user`=?;", 'num_row', '', array($login)) != 1) {
+        if ($this->query("SELECT * FROM `users` WHERE `login_user`=?;", 'num_row', '', array($login)) != 1) {
             //не найден такой пользователь
             $error[] = 'Пользователь с таким именем не найден';
             $this->errors = $error;
             return false;
         } else {
-            $db_inf = $this->db->query("SELECT * FROM `users` WHERE `login_user`=?;", 'accos', '', array($login));
+            $db_inf = $this->query("SELECT * FROM `users` WHERE `login_user`=?;", 'accos', '', array($login));
             if (!filter_var($mail, FILTER_VALIDATE_EMAIL)) {
                 $error[] = 'Введен некорректный email';
             }
@@ -283,7 +275,7 @@ class Auth
                 if ($send_mail = mail($mail, "Восстановление пароля", $message, "From: webmaster@satename.ru\r\n" .
                         "Reply-To: webmaster@satename.ru\r\n" . "X-Mailer: PHP/" . phpversion())) {
                     //обновляет пароль к базе
-                    $this->db->query("UPDATE `users` SET `password_user` = ? WHERE `id_user` = ?;", '', '', array($new_password_sql, $db_inf['id_user']));
+                    $this->query("UPDATE `users` SET `password_user` = ? WHERE `id_user` = ?;", '', '', array($new_password_sql, $db_inf['id_user']));
                     return 'good';
                 } else {
                     //ошибка при отправки письма

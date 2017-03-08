@@ -27,6 +27,6 @@
             <span id="join-mail-help" class="help-block" style="display: none">Help</span>
         </div>
         <input class="hidden" name="send" value="send">
-        <button id="join-submit" type="submit" class="btn btn-default">Зарегистрироваться</button> или <a href="auth.php">войти</a><br />
+        <button id="join-submit" type="submit" class="btn btn-default">Зарегистрироваться</button> или <a href="AuthController.php">войти</a><br />
     </form>    
 </div>

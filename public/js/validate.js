@@ -9,7 +9,7 @@ console.log('validate_form');
 function check_form(data, type) {
 
     $.ajax({
-        url: "../controllers/validate_join.php",
+        url: "../controllers/ValidateController.php",
         cache: false,
         data: "data=" + data + "&type=" + type,
         dataType: "json",

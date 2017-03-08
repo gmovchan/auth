@@ -16,6 +16,6 @@
             <input type="password" class="form-control" placeholder="Пароль" name="password">
         </div>
         <input class="hidden" name="send" value="send">
-        <button type="submit" class="btn btn-default">Войти</button> или <a href="join.php">зарегистрироваться</a>
+        <button type="submit" class="btn btn-default">Войти</button> или <a href="JoinController.php">зарегистрироваться</a>
     </form>    
 </div>

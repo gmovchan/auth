@@ -1,15 +1,16 @@
 <?php
 
-/**
- * принимает ссылку на файл конфигурации для подключения к БД
- */
-class Mysql
+class Model
 {
-
     //хранит подключение к БД для доступа к нему из методов класса
-    private $dbh;
-
-    function connect($config_path, $section_name)
+    protected $dbh;
+        
+    function __construct($config_path, $section_name)
+    {
+        $this->connect($config_path, $section_name);
+    }
+    
+    protected function connect($config_path, $section_name)
     {
         //получение данных из файла конфигурации
         $config_data = $this->config_load($config_path, $section_name);
@@ -31,7 +32,7 @@ class Mysql
      * $section_name принимает массив с параметрами для подготавливаемого 
      * запроса с неименованными псевдопеременными для защиты от инъекций
      */
-    function query($query, $type = null, $num = null, array $query_param = array())
+    protected function query($query, $type = null, $num = null, array $query_param = array())
     {
         try {
             if ($q = $this->dbh->prepare($query)) {
@@ -74,7 +75,7 @@ class Mysql
      * FIXME: лучше переделать на подготавливаемые запросы, функция возвращает
      * строку в кавычках, которая ломает некоторые функции
      */
-    function screening($data)
+    protected function screening($data)
     {
         $data = trim($data);
         return $this->dbh->quote($data);
@@ -85,7 +86,7 @@ class Mysql
      * если передан $section_name, то возвращает только массив с данными из
      * определенной секции конфига
      */
-    function config_load($config_path, $section_name = false)
+    protected function config_load($config_path, $section_name = false)
     {
         if (file_exists($config_path)) {
             $config_array = parse_ini_file($config_path, true);
@@ -97,5 +98,3 @@ class Mysql
     }
 
 }
-
-?>

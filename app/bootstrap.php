@@ -1,12 +1,14 @@
 <?php
 
-require __DIR__ . '/models/auth.php';
-require __DIR__ . '/models/mysql.php';
+require __DIR__ . '/core/Model.php';
+require __DIR__ . '/core/Route.php';
+require __DIR__ . '/core/Controller.php';
+require __DIR__ . '/core/View.php';
+require __DIR__ . '/models/AuthModel.php';
 
-$db = new Mysql();
-$db->connect(__DIR__ . '/configs/app.ini', 'vagrant');
-$auth = new Auth($db);
-
+//$auth = new AuthModel(__DIR__ . '/configs/app.ini', 'vagrant');
+$route = new Route();
+$route->start();
 /*
 if (isset($_SESSION['id_user']) and isset($_SESSION['login_user'])) {
     $sessionIdUser = $_SESSION['id_user'];
