@@ -1,4 +1,7 @@
 <?php
+namespace Application\Controllers;
+
+use Application\Core\Controller;
 
 /**
  * Регистрация нового пользователя

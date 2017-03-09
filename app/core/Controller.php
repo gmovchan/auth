@@ -1,4 +1,7 @@
 <?php
+namespace Application\Core;
+
+use Application\Models\AuthModel;
 
 class Controller
 {

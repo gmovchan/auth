@@ -1,4 +1,8 @@
 <?php
+namespace Application\Models;
+
+use Application\Core\Model;
+
 /**
  * В родительском классе Model находится реализация работы с БД
  */

@@ -1,4 +1,7 @@
 <?php
+namespace Application\Core;
+
+use PDO;
 
 class Model
 {
