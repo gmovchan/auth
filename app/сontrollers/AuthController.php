@@ -1,19 +1,7 @@
 <?php
 
-class AuthController
+class AuthController extends Controller
 {
-
-    private $error = null;
-    private $data = null;
-    private $view;
-    private $auth;
-
-    function __construct()
-    {
-        $this->auth = new AuthModel(__DIR__ . '/../configs/app.ini', 'vagrant');
-        $this->view = new View;
-    }
-
     /**
      * метод открывает форму аутентификации, если пользователь не прошёл авторизацию
      */

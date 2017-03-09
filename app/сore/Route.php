@@ -5,6 +5,7 @@ class Route
 
     public function start()
     {
+        $get = null;
         $controllerName = 'Index';
         $actionName = 'getPage';
 
@@ -15,8 +16,18 @@ class Route
             // так выглядят названия соответствующих классов и файлов, например AuthModel
             $controllerName = ucfirst(strtolower($routes[1]));
         }
-
+        
         if (!empty($routes[2])) {
+            /*
+             * если передаются get переменные, то они будут отделены от названия метода
+             * и переданы в качестве аргумента в его вызов
+             */
+            if(isset($_GET)) {
+                $get = $_GET;
+                // отделяет имя метода от переменных
+                $routes[2] = explode('?',  $routes[2]);
+                $routes[2] = $routes[2][0];
+            }
             $actionName = strtolower($routes[2]);
         }
 
@@ -45,7 +56,7 @@ class Route
 
         if (method_exists($controller, $action)) {
 
-            $controller->$action();
+            $controller->$action($get);
         } else {
             $this->getErrorPage404();
         }

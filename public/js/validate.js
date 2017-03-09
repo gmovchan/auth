@@ -1,6 +1,6 @@
 /*
- * FIXME: переписать функцию, чтобы она передавала не GET, а POST запрос, 
- * чтобы скрыть информацию в поле
+ * TODO: переписать функцию, чтобы она передавала не GET, а POST запрос, 
+ * чтобы скрыть информацию передаваемую из поля
  */
 /* функция отправляет данные из поля для ввода скрипту, который проверяет, есть ли
  уже такие данные в БД, в случае ошибки меняет подсказку к полю и его
@@ -9,7 +9,7 @@ console.log('validate_form');
 function check_form(data, type) {
 
     $.ajax({
-        url: "../controllers/ValidateController.php",
+        url: "../validate/checkjoin",
         cache: false,
         data: "data=" + data + "&type=" + type,
         dataType: "json",

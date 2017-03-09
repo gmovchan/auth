@@ -2,7 +2,9 @@
 
 class Controller
 {
-
+    
+    protected $error = null;
+    protected $data = null;
     protected $auth;
     protected $view;
 
