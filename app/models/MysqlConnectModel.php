@@ -21,10 +21,10 @@ class MysqlConnectModel extends Model{
     }
 
     /**
-     * 
-     * @param type $config_path
-     * @param type $section_name
-     * @return type
+     * возвращает настройки для подключения к БД
+     * @param type $config_path путь к файлу с настройками
+     * @param type $section_name имя секции настроек, которые надо вернуть в виде массива
+     * @return type массив с данными из заданной секции настроек
      */
     private function loadConfig($config_path, $section_name)
     {       
@@ -94,22 +94,5 @@ class MysqlConnectModel extends Model{
         }
     }
 
-    /**
-     * получает путь к файлу конфигурации и возвращает массив
-     * если передан $section_name, то возвращает только массив с данными из
-     * определенной секции конфига
-     */
-    /*
-    protected function config_load($config_path, $section_name = false)
-    {
-        if (file_exists($config_path)) {
-            $config_array = parse_ini_file($config_path, true);
-            if ($section_name) {
-                return $config_array[$section_name];
-            }
-            return $config_array;
-        }
-    }
-    */
 }
 

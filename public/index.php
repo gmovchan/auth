@@ -1,3 +1,4 @@
-<div class="form-signin">
-    Hello World!
-</div>
+<?php
+
+require __DIR__ . '/../app/bootstrap.php';
+
