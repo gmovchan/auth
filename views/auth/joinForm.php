@@ -3,12 +3,12 @@
         <h2 class="form-signin-heading">Регистрация</h2>
         <?php
         if (isset($error)) {
-            require 'auth_error.php';
+            require 'errorAuth.php';
         }
         ?>
         <div class="form-group">
             <label for="name">Логин</label>
-            <input id="join-name" type="text" class="form-control" name="login" placeholder="Логин" value="<?php echo @$_POST['login'] ?>">
+            <input id="join-name" type="text" class="form-control" name="login" placeholder="Логин" value="<?php echo htmlspecialchars($data['login'], ENT_QUOTES) ?>">
             <span id="join-name-help" class="help-block" style="display: none">Help</span>
         </div>
         <div class="form-group">
@@ -23,10 +23,10 @@
         </div>
         <div class="form-group">
             <label for="mail">Email</label>
-            <input id="join-mail" type="email" class="form-control" name="mail" placeholder="Email" value="<?php echo @$_POST['mail'] ?>">
+            <input id="join-mail" type="email" class="form-control" name="mail" placeholder="Email" value="<?php echo htmlspecialchars($data['mail'], ENT_QUOTES) ?>">
             <span id="join-mail-help" class="help-block" style="display: none">Help</span>
         </div>
         <input class="hidden" name="send" value="send">
-        <button id="join-submit" type="submit" class="btn btn-default">Зарегистрироваться</button> или <a href="AuthController.php">войти</a><br />
+        <button id="join-submit" type="submit" class="btn btn-default">Зарегистрироваться</button> или <a href="/../auth">войти</a><br />
     </form>    
 </div>

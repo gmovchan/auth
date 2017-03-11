@@ -2,26 +2,33 @@
 namespace Application\Models;
 
 use Application\Core\Model;
+use Application\Models\MysqlConnectModel;
 
 /**
  * В родительском классе Model находится реализация работы с БД
  */
 class AuthModel extends Model
 {
-
+    // объект для работы с БД
+    private $dbh;
     public $errors = [];
+    
+    function __construct()
+    {
+        $this->dbh = new MysqlConnectModel(__DIR__ . '/../configs/app.ini', 'vagrant');
+    }
 
-    function reg($login, $password, $password2, $mail)
+    public function reg($login, $password, $password2, $mail)
     {
         $check = $this->check_new_user($login, $password, $password2, $mail);
         if ($check == 'good') {
             $password = md5($password . 'lol');
-            if ($this->query("INSERT INTO `users` ( `login_user`,"
+            if ($this->dbh->query("INSERT INTO `users` ( `login_user`,"
                             . " `password_user`, `mail_user`) VALUES (?, ?, ?);", 'num_row', '', array($login, $password, $mail)) != 0) {
                 return true;
             } else {
                 //echo '<p>Возникла ошибка при регистрации нового пользователя. Свяжитесь с администратором</p>';
-                $this->errors[] = '<p>Возникла ошибка при регистрации нового пользователя. Свяжитесь с администратором</p>';
+                $this->errors[] = 'Возникла ошибка при регистрации нового пользователя. Свяжитесь с администратором';
                 return false;
             }
         } else {
@@ -36,7 +43,7 @@ class AuthModel extends Model
      * TODO: вынести валидацию формы на фронт с помощью AJAX
      */
 
-    function check_new_user($login, $password, $password2, $mail)
+    public function check_new_user($login, $password, $password2, $mail)
     {
         if (empty($login) or empty($password) or empty($mail)) {
             $error[] = 'Все поля обязательны для заполнения';
@@ -55,11 +62,11 @@ class AuthModel extends Model
             $error[] = 'Некорректный email';
         }
 
-        if ($this->query("SELECT * FROM `users` WHERE `login_user` = ?;", 'num_row', '', array($login)) != 0) {
+        if ($this->dbh->query("SELECT * FROM `users` WHERE `login_user` = ?;", 'num_row', '', array($login)) != 0) {
             $error[] = 'Пользователь с таким именем уже существует';
         }
 
-        if ($this->query("SELECT * FROM `users` WHERE `mail_user` = ?;", 'num_row', '', array($mail)) != 0) {
+        if ($this->dbh->query("SELECT * FROM `users` WHERE `mail_user` = ?;", 'num_row', '', array($mail)) != 0) {
             $error[] = 'Пользователь с таким email уже существует';
         }
 
@@ -76,7 +83,7 @@ class AuthModel extends Model
      * @param type $type название поля input
      * @return ответ в формате json с названием поля и текстом ошибки, если она есть
      */
-    function check_input($data, $type)
+    public function check_input($data, $type)
     {
         $message = 'false';
         $error = false;
@@ -88,7 +95,7 @@ class AuthModel extends Model
                 if (empty($data)) {
                     $error = true;
                     $message = 'Логин не может быть пустым';
-                } else if ($this->query("SELECT * FROM `users` WHERE `login_user` = ?;", 'num_row', '', array($data)) != 0) {
+                } else if ($this->dbh->query("SELECT * FROM `users` WHERE `login_user` = ?;", 'num_row', '', array($data)) != 0) {
                     $error = true;
                     $message = 'Логин занят';
                 } else {
@@ -123,7 +130,7 @@ class AuthModel extends Model
                 if (!filter_var($data, FILTER_VALIDATE_EMAIL)) {
                     $error = true;
                     $message = 'Некорректный email';
-                } else if ($this->query("SELECT * FROM `users` WHERE `mail_user` = ?;", 'num_row', '', array($data)) != 0) {
+                } else if ($this->dbh->query("SELECT * FROM `users` WHERE `mail_user` = ?;", 'num_row', '', array($data)) != 0) {
                     $error = true;
                     $message = 'Пользователь с таким email уже существует';
                 } else {
@@ -147,7 +154,7 @@ class AuthModel extends Model
      * @param type $value
      * @return boolean|string
      */
-    function check_empty($value)
+    public function check_empty($value)
     {
         if (empty($value)) {
             return 'Поле обязательно должно быть заполнено';
@@ -158,7 +165,7 @@ class AuthModel extends Model
     /**
      * Авторизация
      */
-    function authorization()
+    public function authorization()
     {
         if (isset($_SESSION['id_user']) and isset($_SESSION['login_user'])) {
             return true;
@@ -170,16 +177,16 @@ class AuthModel extends Model
                 $id_user = $_COOKIE['id_user'];
                 $code_user = $_COOKIE['code_user'];
 
-                if ($this->query("SELECT * FROM `session` WHERE `id_user` = ?;", 'num_row', '', array($id_user)) == 1) {
+                if ($this->dbh->query("SELECT * FROM `session` WHERE `id_user` = ?;", 'num_row', '', array($id_user)) == 1) {
 
                     //есть запись, сверяет данные
-                    $data = $this->query("SELECT * FROM `session` WHERE `id_user` = ?;", 'accos', '', array($id_user));
+                    $data = $this->dbh->query("SELECT * FROM `session` WHERE `id_user` = ?;", 'accos', '', array($id_user));
 
                     if ($data['code_sess'] == $code_user and $data['user_agent_sess'] == $_SERVER['HTTP_USER_AGENT']) {
 
                         //данные верны, стартуем сессию
                         $_SESSION['id_user'] = $id_user;
-                        $_SESSION['login_user'] = $this->query("SELECT login_user FROM `users` WHERE `id_user` = ?;", 'result', 0, array($id_user));
+                        $_SESSION['login_user'] = $this->dbh->query("SELECT login_user FROM `users` WHERE `id_user` = ?;", 'result', 0, array($id_user));
 
                         //обновляет куки                            
                         setcookie("id_user", $_SESSION['id_user'], time() + 3600 * 24 * 14, '/');
@@ -204,26 +211,26 @@ class AuthModel extends Model
     /**
      * Аутентификация
      */
-    function authentication()
+    public function authentication()
     {
         $login = $_POST['login'];
         $password = md5($_POST['password'] . 'lol');
 
-        if ($this->query("SELECT * FROM `users` WHERE `login_user` = ? AND `password_user` = ?;", 'num_row', '', array($login, $password)) == 1) {
+        if ($this->dbh->query("SELECT * FROM `users` WHERE `login_user` = ? AND `password_user` = ?;", 'num_row', '', array($login, $password)) == 1) {
             //пользователь с таким логинов и паролем найден
-            $_SESSION['id_user'] = $this->query("SELECT * FROM `users` WHERE `login_user` = ? AND `password_user` = ?;", 'result', 0, array($login, $password));
+            $_SESSION['id_user'] = $this->dbh->query("SELECT * FROM `users` WHERE `login_user` = ? AND `password_user` = ?;", 'result', 0, array($login, $password));
             $_SESSION['login_user'] = $login;
             //добавляет/обновляет запись в таблице сессий и ставит куки
             $r_code = $this->generateCode(15);
 
-            if ($this->query("SELECT * FROM `session` WHERE `id_user` = ?;", 'num_row', '', array($_SESSION['id_user'])) == 1) {
+            if ($this->dbh->query("SELECT * FROM `session` WHERE `id_user` = ?;", 'num_row', '', array($_SESSION['id_user'])) == 1) {
 
                 //запись уже есть - обновляем
-                $this->query("UPDATE `session` SET `code_sess` = ?, `user_agent_sess` = ? where `id_user` = ?;", '', '', array($r_code, $_SERVER['HTTP_USER_AGENT'], $_SESSION['id_user']));
+                $this->dbh->query("UPDATE `session` SET `code_sess` = ?, `user_agent_sess` = ? where `id_user` = ?;", '', '', array($r_code, $_SERVER['HTTP_USER_AGENT'], $_SESSION['id_user']));
             } else {
 
                 // записи нет, добавляет
-                $this->query("INSERT INTO `session` (`id_user`, `code_sess`, `user_agent_sess`) VALUE (?, ?, ?);", '', '', array($_SESSION['id_user'], $r_code, $_SERVER['HTTP_USER_AGENT']));
+                $this->dbh->query("INSERT INTO `session` (`id_user`, `code_sess`, `user_agent_sess`) VALUE (?, ?, ?);", '', '', array($_SESSION['id_user'], $r_code, $_SERVER['HTTP_USER_AGENT']));
             }
             //ставим куки на 2 недели
             setcookie("id_user", $_SESSION['id_user'], time() + 3600 * 24 * 14, '/');
@@ -232,7 +239,7 @@ class AuthModel extends Model
         } else {
 
             //пользователь не найден в БД или пароль неверный
-            if ($this->query("SELECT * FROM `users` WHERE `login_user` = ?;", 'num_row', 0, array($login)) == 1) {
+            if ($this->dbh->query("SELECT * FROM `users` WHERE `login_user` = ?;", 'num_row', 0, array($login)) == 1) {
                 $error[] = 'Неверный пароль';
             } else {
                 $error[] = 'Пользователя не сущестует';
@@ -242,7 +249,7 @@ class AuthModel extends Model
         }
     }
 
-    function exit_user()
+    public function exit_user()
     {
         session_start();
         session_destroy();
@@ -254,15 +261,15 @@ class AuthModel extends Model
         exit();
     }
 
-    function recovery_pass($login, $mail)
+    public function recovery_pass($login, $mail)
     {
-        if ($this->query("SELECT * FROM `users` WHERE `login_user`=?;", 'num_row', '', array($login)) != 1) {
+        if ($this->dbh->query("SELECT * FROM `users` WHERE `login_user`=?;", 'num_row', '', array($login)) != 1) {
             //не найден такой пользователь
             $error[] = 'Пользователь с таким именем не найден';
             $this->errors = $error;
             return false;
         } else {
-            $db_inf = $this->query("SELECT * FROM `users` WHERE `login_user`=?;", 'accos', '', array($login));
+            $db_inf = $this->dbh->query("SELECT * FROM `users` WHERE `login_user`=?;", 'accos', '', array($login));
             if (!filter_var($mail, FILTER_VALIDATE_EMAIL)) {
                 $error[] = 'Введен некорректный email';
             }
@@ -300,7 +307,7 @@ class AuthModel extends Model
     /**
      * генерирует случайную строку
      */
-    function generateCode($length)
+    private function generateCode($length)
     {
         $chars = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPRQSTUVWXYZ0123456789";
         $code = '';
@@ -311,21 +318,6 @@ class AuthModel extends Model
 
         return $code;
     }
-
-    /**
-     * Формирует список ошибок
-     */
-    /*
-      function error_print($error)
-      {
-      $r = '<div class="bg-danger">Произошли ошибки:' . "\n" . '<ul>';
-      foreach ($error as $key => $value) {
-      $r .= '<li>' . $value . '</li>';
-      }
-      return $r . '</ul></div>';
-      }
-     * 
-     */
 
     public function getErrors()
     {

@@ -18,7 +18,7 @@ class Controller
      */
     function __construct()
     {
-        $this->auth = new AuthModel(__DIR__ . '/../configs/app.ini', 'vagrant');
+        $this->auth = new AuthModel();
         $this->view = new View;
     }
 

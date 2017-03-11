@@ -33,9 +33,8 @@ class Route
             $actionName = strtolower($routes[2]);
         }
 
-        $controllerlClass = $controllerName;
+        $controllerlClass = $controllerName . 'Controller';
         $controllerNamespace = 'Application\\Controllers\\' . $controllerlClass;
-
         if (!class_exists($controllerNamespace)) {
             $this->getErrorPage404();
         }
@@ -44,7 +43,6 @@ class Route
         $action = $actionName;
 
         if (method_exists($controller, $action)) {
-
             $controller->$action($get);
         } else {
             $this->getErrorPage404();

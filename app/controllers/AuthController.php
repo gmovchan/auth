@@ -1,10 +1,12 @@
 <?php
+
 namespace Application\Controllers;
 
 use Application\Core\Controller;
 
 class AuthController extends Controller
 {
+
     /**
      * метод открывает форму аутентификации, если пользователь не прошёл авторизацию
      */
@@ -12,6 +14,9 @@ class AuthController extends Controller
     {
         // Авторизация
         if (isset($_POST['send'])) {
+
+            $this->data['login'] = $_POST['login'];
+
             if (!$this->auth->authentication()) {
                 $this->error = $this->auth->getErrors();
             }
