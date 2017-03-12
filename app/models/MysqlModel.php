@@ -3,19 +3,40 @@
 namespace Application\Models;
 
 use Application\Core\Model;
+use Application\Core\AuthModel;
 use PDO;
 
 /**
- * объект класса подключается к БД и работает с запросами
+ * Объект класса подключается к БД и работает с запросами
+ * Новый уровень абстракции для работы с БД и запросами к ней необходим, чтобы
+ * если изменится способ подключения и настройки, то достаточно было бы изменить
+ * только этот класс
  */
-class MysqlConnectModel extends Model{
-   
+class MysqlModel extends Model
+{
+
     //хранит подключение к БД для доступа к нему из методов класса
     private $dbh;
     private $config_data;
-    
-    function __construct($config_path, $section_name)
-    {   
+
+    /**
+     * 
+     * @param str $className имя класса из которого создается объект MysqlModel
+     */
+    public function __construct($className)
+    {
+        switch ($className) {
+            case 'Application\Models\AuthModel':
+                $config_path = __DIR__ . '/../configs/app.ini';
+                $section_name = 'vagrant';
+                break;
+
+            default:
+                // TODO: требуется вернуть ошибку, если настроек для класса не найдено
+                // пока не придумал как обрабатывать ошибки из модели
+                break;
+        }
+
         $this->loadConfig($config_path, $section_name);
         $this->connect();
     }
@@ -27,9 +48,9 @@ class MysqlConnectModel extends Model{
      * @return type массив с данными из заданной секции настроек
      */
     private function loadConfig($config_path, $section_name)
-    {       
+    {
         $config_array = parse_ini_file($config_path, true);
-        $config_array =  $config_array[$section_name];
+        $config_array = $config_array[$section_name];
         // присваивает защищенному свойству объекта данные из файла конфигурации
         $this->config_data = $config_array;
     }
@@ -39,13 +60,13 @@ class MysqlConnectModel extends Model{
         // отлов ошибок подключения к БД
         // FIXME: плохое использование исключений, перепишу, как узнаю о них больше
         try {
-        $this->dbh = new PDO('mysql:host=' . $this->config_data['host'] . ';dbname=' .
-                $this->config_data['db'], $this->config_data['user'], $this->config_data['password']);
-        // требуется чтобы PDO сообщало об ошибке и прерывало выполнение скрипта
-        $this->dbh->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+            $this->dbh = new PDO('mysql:host=' . $this->config_data['host'] . ';dbname=' .
+                    $this->config_data['db'], $this->config_data['user'], $this->config_data['password']);
+            // требуется чтобы PDO сообщало об ошибке и прерывало выполнение скрипта
+            $this->dbh->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
         } catch (PDOException $e) {
-        echo '<p>' . $e->getMessage() . '</p>';
-        exit();
+            echo '<p>' . $e->getMessage() . '</p>';
+            exit();
         }
     }
 
@@ -95,4 +116,3 @@ class MysqlConnectModel extends Model{
     }
 
 }
-

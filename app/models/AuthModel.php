@@ -1,21 +1,22 @@
 <?php
+
 namespace Application\Models;
 
 use Application\Core\Model;
-use Application\Models\MysqlConnectModel;
+use Application\Models\MysqlModel;
 
-/**
- * В родительском классе Model находится реализация работы с БД
- */
 class AuthModel extends Model
 {
+
     // объект для работы с БД
     private $dbh;
     public $errors = [];
-    
-    function __construct()
+
+    public function __construct()
     {
-        $this->dbh = new MysqlConnectModel(__DIR__ . '/../configs/app.ini', 'vagrant');
+        // передает имя класса из которого вызывается, для каждого класса свои
+        // настройки mysql
+        $this->dbh = new MysqlModel(get_class($this));
     }
 
     public function reg($login, $password, $password2, $mail)
@@ -189,8 +190,8 @@ class AuthModel extends Model
                         $_SESSION['login_user'] = $this->dbh->query("SELECT login_user FROM `users` WHERE `id_user` = ?;", 'result', 0, array($id_user));
 
                         //обновляет куки                            
-                        setcookie("id_user", $_SESSION['id_user'], time() + 3600 * 24 * 14, '/');
-                        setcookie("code_user", $code_user, time() + 3600 * 24 * 14, '/');
+                        setcookie("id_user", $_SESSION['id_user'], time() + 3600 * 24 * 14, '/', null, false, true);
+                        setcookie("code_user", $code_user, time() + 3600 * 24 * 14, '/', null, false, true);
 
                         return true;
                     } else {
@@ -233,8 +234,8 @@ class AuthModel extends Model
                 $this->dbh->query("INSERT INTO `session` (`id_user`, `code_sess`, `user_agent_sess`) VALUE (?, ?, ?);", '', '', array($_SESSION['id_user'], $r_code, $_SERVER['HTTP_USER_AGENT']));
             }
             //ставим куки на 2 недели
-            setcookie("id_user", $_SESSION['id_user'], time() + 3600 * 24 * 14, '/');
-            setcookie("code_user", $r_code, time() + 3600 * 24 * 14, '/');
+            setcookie("id_user", $_SESSION['id_user'], time() + 3600 * 24 * 14, '/', null, false, true);
+            setcookie("code_user", $r_code, time() + 3600 * 24 * 14, '/', null, false, true);
             return true;
         } else {
 
@@ -253,8 +254,8 @@ class AuthModel extends Model
     {
         session_start();
         session_destroy();
-        setcookie("id_user", '', time() - 3600, '/');
-        setcookie("code_user", '', time() - 3600, '/');
+        setcookie("id_user", '', time() - 3600, '/', null, false, true);
+        setcookie("code_user", '', time() - 3600, '/', null, false, true);
         var_dump($_COOKIE);
         $host = 'http://' . $_SERVER['HTTP_HOST'] . '/auth';
         header("Location:" . $host);
