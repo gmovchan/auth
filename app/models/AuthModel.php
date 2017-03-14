@@ -14,9 +14,9 @@ class AuthModel extends Model
 
     public function __construct()
     {
-        // передает имя класса из которого вызывается, для каждого класса свои
+        // передает класса из которого вызывается, для каждого класса свои
         // настройки mysql
-        $this->dbh = new MysqlModel(get_class($this));
+        $this->dbh = new MysqlModel($this);
     }
 
     public function reg($login, $password, $password2, $mail)

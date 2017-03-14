@@ -21,10 +21,11 @@ class MysqlModel extends Model
 
     /**
      * 
-     * @param str $className имя класса из которого создается объект MysqlModel
+     * @param Model $classModel класса из которого создается объект MysqlModel
      */
-    public function __construct($className)
+    public function __construct(Model $classModel)
     {
+        $className = get_class($classModel);
         switch ($className) {
             case 'Application\Models\AuthModel':
                 $config_path = __DIR__ . '/../configs/app.ini';
