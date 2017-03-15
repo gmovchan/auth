@@ -17,6 +17,7 @@ class AuthModel extends Model
         // передает класса из которого вызывается, для каждого класса свои
         // настройки mysql
         $this->dbh = new MysqlModel($this);
+       
     }
 
     public function reg($login, $password, $password2, $mail)
@@ -227,11 +228,11 @@ class AuthModel extends Model
             if ($this->dbh->query("SELECT * FROM `session` WHERE `id_user` = ?;", 'num_row', '', array($_SESSION['id_user'])) == 1) {
 
                 //запись уже есть - обновляем
-                $this->dbh->query("UPDATE `session` SET `code_sess` = ?, `user_agent_sess` = ? where `id_user` = ?;", '', '', array($r_code, $_SERVER['HTTP_USER_AGENT'], $_SESSION['id_user']));
+                $this->dbh->query("UPDATE `session` SET `code_sess` = ?, `user_agent_sess` = ? where `id_user` = ?;", 'none', '', array($r_code, $_SERVER['HTTP_USER_AGENT'], $_SESSION['id_user']));
             } else {
 
                 // записи нет, добавляет
-                $this->dbh->query("INSERT INTO `session` (`id_user`, `code_sess`, `user_agent_sess`) VALUE (?, ?, ?);", '', '', array($_SESSION['id_user'], $r_code, $_SERVER['HTTP_USER_AGENT']));
+                $this->dbh->query("INSERT INTO `session` (`id_user`, `code_sess`, `user_agent_sess`) VALUE (?, ?, ?);", 'none', '', array($_SESSION['id_user'], $r_code, $_SERVER['HTTP_USER_AGENT']));
             }
             //ставим куки на 2 недели
             setcookie("id_user", $_SESSION['id_user'], time() + 3600 * 24 * 14, '/', null, false, true);
