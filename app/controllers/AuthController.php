@@ -12,7 +12,6 @@ class AuthController extends Controller
      */
     public function getPage()
     {
-        
         // Авторизация
         if (isset($_POST['send'])) {
 
