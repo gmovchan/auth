@@ -32,7 +32,7 @@ class Route
             }
             $actionName = strtolower($routes[2]);
         }
-
+        
         $controllerlClass = $controllerName . 'Controller';
         $controllerNamespace = 'Application\\Controllers\\' . $controllerlClass;
         if (!class_exists($controllerNamespace)) {

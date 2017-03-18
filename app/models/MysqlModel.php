@@ -37,21 +37,21 @@ class MysqlModel extends Model
     {
         $config_path = null;
         $section_name = null;
-        // TODO: требуется вернуть ошибку, если настроек для класса не найдено
-        // пока не придумал как обрабатывать ошибки из модели
+
         if ($classModel instanceof AuthModel) {
             $config_path = __DIR__ . '/../configs/app.ini';
             $section_name = 'vagrant';
         }
-        
+
         /*
-         * скорее всего не требуется выбрасывать тут исключение, потому что 
+         * возможно не требуется выбрасывать тут исключение, потому что 
          * приложение и так ломается на этапе подключения к БД, если не удалось 
-         * получить настройки
-        if (is_null($section_name) or is_null($config_path)) {
-            throw new Exception("Для класса ".get_class($classModel)." нет настроек Mysql");
-        }
+         * получить настройки 
          */
+        if (is_null($section_name) or is_null($config_path)) {
+            throw new \Exception("Для класса ".get_class($classModel)." нет настроек Mysql");
+        }
+         
         $config_array = parse_ini_file($config_path, true);
         $config_array = $config_array[$section_name];
         // присваивает защищенному свойству объекта данные из файла конфигурации
