@@ -32,5 +32,4 @@
 </div>
 
 <!-- Скрипты для AJAX валидации формы регистрации -->    
-<script src="<?php echo '/../js/validate.js'; ?>"></script>
-<script src="<?php echo '/../js/join.js'; ?>"></script>
+<script src="<?php echo '/../js/joinForm.js'; ?>"></script>
