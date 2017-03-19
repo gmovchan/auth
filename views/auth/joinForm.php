@@ -30,3 +30,7 @@
         <button id="join-submit" type="submit" class="btn btn-default">Зарегистрироваться</button> или <a href="/../auth">войти</a><br />
     </form>    
 </div>
+
+<!-- Скрипты для AJAX валидации формы регистрации -->    
+<script src="<?php echo '/../js/validate.js'; ?>"></script>
+<script src="<?php echo '/../js/join.js'; ?>"></script>
